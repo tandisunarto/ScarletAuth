@@ -2,13 +2,18 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
+using System.Reflection;
 using IdentityServer4;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ScarletAuth.Controllers;
+using ScarletAuth.Data;
+using ScarletAuth.ViewModels;
 
 namespace ScarletAuth
 {
@@ -25,7 +30,18 @@ namespace ScarletAuth
 
         public void ConfigureServices(IServiceCollection services)
         {
+            var identityServerConnection = Configuration.GetConnectionString("IdentityServerConnection");
+            var migrationAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
+
             services.AddControllersWithViews();
+
+            services.AddDbContext<ApplicationDbContext>(options => {
+                options.UseSqlite(identityServerConnection, options => options.MigrationsAssembly(migrationAssembly));
+            });
+
+            services.AddIdentity<ApplicationUser, IdentityRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
 
             var builder = services.AddIdentityServer(options =>
             {
@@ -37,12 +53,24 @@ namespace ScarletAuth
                 // see https://identityserver4.readthedocs.io/en/latest/topics/resources.html
                 options.EmitStaticAudienceClaim = true;
             })
-                .AddTestUsers(TestUsers.Users);
+                // .AddTestUsers(TestUsers.Users);
+                .AddAspNetIdentity<ApplicationUser>();
 
             // in-memory, code config
-            builder.AddInMemoryIdentityResources(Config.IdentityResources);
-            builder.AddInMemoryApiScopes(Config.ApiScopes);
-            builder.AddInMemoryClients(Config.Clients);
+            // builder.AddInMemoryIdentityResources(Config.IdentityResources);
+            // builder.AddInMemoryApiResources(Config.ApiResources);
+            // builder.AddInMemoryApiScopes(Config.ApiScopes);
+            // builder.AddInMemoryClients(Config.Clients);
+            builder.AddConfigurationStore(options => {
+                options.ConfigureDbContext = builder => 
+                    builder.UseSqlite(identityServerConnection,
+                        option => option.MigrationsAssembly(migrationAssembly));
+            });
+            builder.AddOperationalStore(options => {
+                options.ConfigureDbContext = builder => 
+                    builder.UseSqlite(identityServerConnection,
+                        option => option.MigrationsAssembly(migrationAssembly));
+            });
 
             // not recommended for production - you need to store your key material somewhere secure
             builder.AddDeveloperSigningCredential();
@@ -72,6 +100,7 @@ namespace ScarletAuth
             app.UseRouting();
             app.UseIdentityServer();
             app.UseAuthorization();
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapDefaultControllerRoute();

@@ -8,6 +8,7 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 using System;
+using System.Linq;
 
 namespace ScarletAuth
 {
@@ -32,10 +33,34 @@ namespace ScarletAuth
                 .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level}] {SourceContext}{NewLine}{Message:lj}{NewLine}{Exception}{NewLine}", theme: AnsiConsoleTheme.Code)
                 .CreateLogger();
 
+            var seedIDP = args.Any(x => x == "/seedIDP");
+            if (seedIDP) args = args.Except(new[] { "/seedIDP" }).ToArray();
+            var seedUsers = args.Any(x => x == "/seedUsers");
+            if (seedUsers) args = args.Except(new[] { "/seedUsers" }).ToArray();
+
             try
             {
                 Log.Information("Starting host...");
-                CreateHostBuilder(args).Build().Run();
+                var host = CreateHostBuilder(args).Build();
+
+                if (seedIDP)
+                {
+                    Log.Information("Seeding IdentityServer4 Database");
+                    SeedData.InitializeIDPDatabase(host.Services);
+                    Log.Information("Finished IdentityServer4 Database");
+                    return 0;
+                }
+
+                if (seedUsers)
+                {
+                    Log.Information("Seeding .NET Identity Database");
+                    SeedData.InitializeUsersDatabase(host.Services);
+                    Log.Information("Finsihed .NET Identity Database");
+                    return 0;
+                }  
+
+                Log.Information("Starting Host");
+                host.Run();
                 return 0;
             }
             catch (Exception ex)
