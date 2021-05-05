@@ -2,7 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
+using System.IO;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 using IdentityServer4;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -73,7 +75,10 @@ namespace ScarletAuth
             });
 
             // not recommended for production - you need to store your key material somewhere secure
-            builder.AddDeveloperSigningCredential();
+            // if (Environment.IsDevelopment())
+                builder.AddDeveloperSigningCredential();
+            // else
+                // SetupSigningCredential(builder);
 
             services.AddAuthentication()
                 .AddGoogle(options =>
@@ -86,6 +91,15 @@ namespace ScarletAuth
                     options.ClientId = "copy client ID from Google here";
                     options.ClientSecret = "copy client secret from Google here";
                 });
+        }
+
+        private void SetupSigningCredential(IIdentityServerBuilder builder)
+        {
+            var keyFilePath = Configuration["KeyFilePath"];
+            var keyFilePassword = Configuration["KeyFilePassword"];
+
+            if (File.Exists(keyFilePath))
+                builder.AddSigningCredential(new X509Certificate2(keyFilePath));
         }
 
         public void Configure(IApplicationBuilder app)
