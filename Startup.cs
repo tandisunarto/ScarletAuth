@@ -99,7 +99,7 @@ namespace ScarletAuth
             var keyFilePassword = Configuration["KeyFilePassword"];
 
             if (File.Exists(keyFilePath))
-                builder.AddSigningCredential(new X509Certificate2(keyFilePath));
+                builder.AddSigningCredential(new X509Certificate2(keyFilePath, keyFilePassword));
         }
 
         public void Configure(IApplicationBuilder app)
