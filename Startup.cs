@@ -16,11 +16,14 @@ using Microsoft.Extensions.Hosting;
 using ScarletAuth.Controllers;
 using ScarletAuth.Data;
 using ScarletAuth.ViewModels;
+using Serilog;
 
 namespace ScarletAuth
 {
     public class Startup
     {
+        private readonly ILogger log;
+
         public IWebHostEnvironment Environment { get; }
         public IConfiguration Configuration { get; }
 
@@ -28,12 +31,15 @@ namespace ScarletAuth
         {
             Environment = environment;
             Configuration = configuration;
+
         }
 
         public void ConfigureServices(IServiceCollection services)
         {
             var identityServerConnection = Configuration.GetConnectionString("IdentityServerConnection");
             var migrationAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
+
+            Log.Information($"My Connection String is {identityServerConnection}");
 
             services.AddControllersWithViews();
 
