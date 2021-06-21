@@ -38,7 +38,7 @@ namespace ScarletAuth
             services.AddControllersWithViews();
 
             services.AddDbContext<ApplicationDbContext>(options => {
-                options.UseSqlServer(identityServerConnection, options => options.MigrationsAssembly(migrationAssembly));
+                options.UseNpgsql(identityServerConnection, options => options.MigrationsAssembly(migrationAssembly));
             });
 
             services.AddIdentity<ApplicationUser, IdentityRole>()
@@ -65,12 +65,12 @@ namespace ScarletAuth
             // builder.AddInMemoryClients(Config.Clients);
             builder.AddConfigurationStore(options => {
                 options.ConfigureDbContext = builder => 
-                    builder.UseSqlServer(identityServerConnection,
+                    builder.UseNpgsql(identityServerConnection,
                         option => option.MigrationsAssembly(migrationAssembly));
             });
             builder.AddOperationalStore(options => {
                 options.ConfigureDbContext = builder => 
-                    builder.UseSqlServer(identityServerConnection,
+                    builder.UseNpgsql(identityServerConnection,
                         option => option.MigrationsAssembly(migrationAssembly));
             });
 
