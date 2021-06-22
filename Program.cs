@@ -26,9 +26,9 @@ namespace ScarletAuth
                 // uncomment to write to Azure diagnostics stream
                 .WriteTo.File(
                    @"identityserver.log",
-                //    @"D:\home\LogFiles\Application\identityserver.txt",
                    fileSizeLimitBytes: 1_000_000,
                    rollOnFileSizeLimit: true,
+                   retainedFileCountLimit: 1,
                    shared: true,
                    flushToDiskInterval: TimeSpan.FromSeconds(1))
                 .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level}] {SourceContext}{NewLine}{Message:lj}{NewLine}{Exception}{NewLine}", theme: AnsiConsoleTheme.Code)
